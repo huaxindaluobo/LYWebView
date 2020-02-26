@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import WebKit
 
 class LYWebViewController: UIViewController {
 
@@ -37,6 +38,7 @@ class LYWebViewController: UIViewController {
     
     func setupUI() {
         let webView = LYWebView(frame: self.view.frame, url: self.url?.absoluteString ?? "")
+        webView.delegate = self
         self.view.addSubview(webView)
         
     }
@@ -55,4 +57,14 @@ class LYWebViewController: UIViewController {
         }
     }
 
+}
+
+extension LYWebViewController:LYWebViewDelegate {
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        webView.evaluateJavaScript("window.document.title") { (result, error) in
+            self.title = result as? String
+        }
+    }
+    
+    
 }

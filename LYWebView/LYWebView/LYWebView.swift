@@ -9,13 +9,19 @@
 import UIKit
 import WebKit
 
-protocol LYWebViewDelegate {
-    
+protocol LYWebViewDelegate  {
+    /** called when the navigation finished */
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!)
 }
 
 class LYWebView: UIView {
     var webView = WKWebView()
     var url = ""
+    var progressView = UIView()
+    
+    var delegate:LYWebViewDelegate?
+    
+    
     init(frame: CGRect,url:String) {
         self.url = url
         super.init(frame: frame)
@@ -40,6 +46,32 @@ class LYWebView: UIView {
             
         }
         self.addSubview(webView)
+        //进度条
+        if #available(iOS 11.0, *) {
+            progressView.frame = CGRect(x: 0, y: safeAreaInsets.top, width: 0, height: 2)
+        } else {
+            // Fallback on earlier versions
+        }
+        progressView.backgroundColor = UIColor.red
+        webView.addObserver(self, forKeyPath: "estimatedProgress", options: .new, context: nil)
+        self.addSubview(progressView)
+        
+    }
+    
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+        if keyPath == "estimatedProgress" {
+            var y = 0.0
+            
+            if #available(iOS 11.0, *) {
+                y = Double(safeAreaInsets.top)
+            } else {
+                // Fallback on earlier versions
+            }
+            progressView.frame = CGRect(x: 0, y: Int(y), width: Int(Float(UIScreen.main.bounds.size.width)*Float(self.webView.estimatedProgress)), height: 2)
+            if self.webView.estimatedProgress>=1.0 {
+                progressView.frame = CGRect(x: 0, y: y, width: 0, height: 0);
+            }
+        }
     }
     
     func registerJS() {
@@ -92,6 +124,10 @@ extension LYWebView:WKNavigationDelegate {
     /** called when the navigation finished */
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
          print("---------------5----------------")
+        if let dele = delegate {
+            dele.webView(webView, didFinish: navigation)
+        }
+        
     }
    
     /** called when The Navigation error */
